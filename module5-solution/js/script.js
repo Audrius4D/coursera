@@ -1,289 +1,164 @@
-$(function () { // Same as document.addEventListener("DOMContentLoaded"...
+// document.addEventListener("DOMContentLoaded", foo);
+$(function() {
+	console.log('DOM is loaded');
 
-  // Same as document.querySelector("#navbarToggle").addEventListener("blur",...
-  $("#navbarToggle").blur(function (event) {
-    var screenWidth = window.innerWidth;
-    if (screenWidth < 768) {
-      $("#collapsable-nav").collapse('hide');
-    }
-  });
+	// document.querySelector("#navbarToggle").addEventListener("blur", foo);
+	$("#navbarToggle").blur(function(event) {
+		var width = window.innerWidth;
 
-  // In Firefox and Safari, the click event doesn't retain the focus
-  // on the clicked button. Therefore, the blur event will not fire on
-  // user clicking somewhere else in the page and the blur event handler
-  // which is set up above will not be called.
-  // Refer to issue #28 in the repo.
-  // Solution: force focus on the element that the click event fired on
-  $("#navbarToggle").click(function (event) {
-    $(event.target).focus();
-  });
+		if (width < 768) {
+			$("#collapsable-nav").collapse('hide');
+		}
+	});
 });
 
-(function (global) {
 
-var dc = {};
+(function(global) {
 
-var homeHtml = "snippets/home-snippet.html";
-var allCategoriesUrl =
-  "https://davids-restaurant.herokuapp.com/categories.json";
-var categoriesTitleHtml = "snippets/categories-title-snippet.html";
-var categoryHtml = "snippets/category-snippet.html";
-var menuItemsUrl =
-  "https://davids-restaurant.herokuapp.com/menu_items.json?category=";
-var menuItemsTitleHtml = "snippets/menu-items-title.html";
-var menuItemHtml = "snippets/menu-item.html";
+	var allCategoriesSourcesURL = "http://davids-restaurant.herokuapp.com/categories.json";
+	var menuItemsSourcesURL = "http://davids-restaurant.herokuapp.com/menu_items.json?category=";
 
-// Convenience function for inserting innerHTML for 'select'
-var insertHtml = function (selector, html) {
-  var targetElem = document.querySelector(selector);
-  targetElem.innerHTML = html;
-};
+	var categoriesTitleURL = "snippets/categories-title-snippet.html";
+	var singleCategoryURL = "snippets/category-snippet.html";
+	var homeURL = "snippets/home-snippet.html";
 
-// Show loading icon inside element identified by 'selector'.
-var showLoading = function (selector) {
-  var html = "<div class='text-center'>";
-  html += "<img src='images/ajax-loader.gif'></div>";
-  insertHtml(selector, html);
-};
+	var menuItemsTitleURL = "snippets/menu-items-title.html";
+	var singleMenuItemURL = "snippets/menu-item.html";
 
-// Return substitute of '{{propName}}'
-// with propValue in given 'string'
-var insertProperty = function (string, propName, propValue) {
-  var propToReplace = "{{" + propName + "}}";
-  string = string
-    .replace(new RegExp(propToReplace, "g"), propValue);
-  return string;
-}
+	var dc = {};
 
-// Remove the class 'active' from home and switch to Menu button
-var switchMenuToActive = function () {
-  // Remove 'active' from home button
-  var classes = document.querySelector("#navHomeButton").className;
-  classes = classes.replace(new RegExp("active", "g"), "");
-  document.querySelector("#navHomeButton").className = classes;
+	var insertHtml = function(selector, html) {
+		var element = document.querySelector(selector);
+		element.innerHTML = html;
+	}
 
-  // Add 'active' to menu button if not already there
-  classes = document.querySelector("#navMenuButton").className;
-  if (classes.indexOf("active") == -1) {
-    classes += " active";
-    document.querySelector("#navMenuButton").className = classes;
-  }
-};
+	var showLoading = function(selector) {
+		var loader = "<div class='text-center'>" +
+		"<img src='images/ajax-loader.gif'></img>" +
+		"</div>";
 
-// On page load (before images or CSS)
-document.addEventListener("DOMContentLoaded", function (event) {
+		insertHtml(selector, loader);
+	}
 
-// On first load, show home view
-showLoading("#main-content");
-$ajaxUtils.sendGetRequest(
-  homeHtml,
-  function (responseText) {
-    document.querySelector("#main-content")
-      .innerHTML = responseText;
-  },
-  false);
-});
+	var insertProperty = function(string, propName, propValue) {
+		var propToReplace = "{{" + propName + "}}";
+		string = string.replace(new RegExp(propToReplace, "g"), propValue);
+		return string;
+	}
 
-// Load the menu categories view
-dc.loadMenuCategories = function () {
-  showLoading("#main-content");
-  $ajaxUtils.sendGetRequest(
-    allCategoriesUrl,
-    buildAndShowCategoriesHTML);
-};
+	var loadContent = function(selector, url) {
+		showLoading(selector);
+		ajaxUtils.sendGetRequest(url, function(response) {
+			insertHtml(selector, response.responseText);
+		},
+		false);
+	}
 
+	document.addEventListener("DOMContentLoaded", function() {
+		loadContent("#main-content", homeURL);
+	});
 
-// Load the menu items view
-// 'categoryShort' is a short_name for a category
-dc.loadMenuItems = function (categoryShort) {
-  showLoading("#main-content");
-  $ajaxUtils.sendGetRequest(
-    menuItemsUrl + categoryShort,
-    buildAndShowMenuItemsHTML);
-};
+	dc.loadMenuCategories = function() {
+		showLoading("#main-content");
+		setMenuButtonActive();
+		ajaxUtils.sendGetRequest(allCategoriesSourcesURL, buidAndShowCategoriesHTML, true);
+	}
 
+	dc.loadMenuItems = function(categoryShort) {
+		showLoading("#main-content");
+		setMenuButtonActive();
+		ajaxUtils.sendGetRequest(menuItemsSourcesURL + categoryShort, buidAndShowMenuItemsHTML, true);
+	}
 
-// Builds HTML for the categories page based on the data
-// from the server
-function buildAndShowCategoriesHTML (categories) {
-  // Load title snippet of categories page
-  $ajaxUtils.sendGetRequest(
-    categoriesTitleHtml,
-    function (categoriesTitleHtml) {
-      // Retrieve single category snippet
-      $ajaxUtils.sendGetRequest(
-        categoryHtml,
-        function (categoryHtml) {
-          // Switch CSS class active to menu button
-          switchMenuToActive();
+	var buidAndShowMenuItemsHTML = function(menuItems) {
+		ajaxUtils.sendGetRequest(menuItemsTitleURL, 
+			function(menuItemsTitleHTML) {
 
-          var categoriesViewHtml =
-            buildCategoriesViewHtml(categories,
-                                    categoriesTitleHtml,
-                                    categoryHtml);
-          insertHtml("#main-content", categoriesViewHtml);
-        },
-        false);
-    },
-    false);
-}
+				ajaxUtils.sendGetRequest(singleMenuItemURL,
+					function(singleMenuItemHtml) {
+						var mainContent = buildMenuItemsView(menuItems, menuItemsTitleHTML.responseText, singleMenuItemHtml.responseText);
+						insertHtml("#main-content", mainContent);
+					});
+			});
+	}
 
+	var setMenuButtonActive = function() {
 
-// Using categories data and snippets html
-// build categories view HTML to be inserted into page
-function buildCategoriesViewHtml(categories,
-                                 categoriesTitleHtml,
-                                 categoryHtml) {
+		var navHomeButton = document.getElementById("navHomeButton");
+		navHomeButton.className = navHomeButton.className.replace(new RegExp("active", "g"), "");
 
-  var finalHtml = categoriesTitleHtml;
-  finalHtml += "<section class='row'>";
+		var navMenuButton = document.getElementById("navMenuButton");
+		
+		if (navMenuButton.className.indexOf("active") == -1) {
+			navMenuButton.className += " active";
+		}
+	}
 
-  // Loop over categories
-  for (var i = 0; i < categories.length; i++) {
-    // Insert category values
-    var html = categoryHtml;
-    var name = "" + categories[i].name;
-    var short_name = categories[i].short_name;
-    html =
-      insertProperty(html, "name", name);
-    html =
-      insertProperty(html,
-                     "short_name",
-                     short_name);
-    finalHtml += html;
-  }
+	var buidAndShowCategoriesHTML = function(allCategories) {
+		ajaxUtils.sendGetRequest(categoriesTitleURL, 
+			function(categoriesTitleHtml) {
 
-  finalHtml += "</section>";
-  return finalHtml;
-}
+				ajaxUtils.sendGetRequest(singleCategoryURL,
+					function(singleCategoryHtml) {
+						var mainContent = buildCategoriesView(allCategories, categoriesTitleHtml.responseText, singleCategoryHtml.responseText);
+						insertHtml("#main-content", mainContent);
+					});
+			});
+	}
 
+	var buildCategoriesView = function(allCategories, categoriesTitleHtml, singleCategoryHtml) {
 
+		var finalHtml = categoriesTitleHtml +
+		"<section class='row'>";
 
-// Builds HTML for the single category page based on the data
-// from the server
-function buildAndShowMenuItemsHTML (categoryMenuItems) {
-  // Load title snippet of menu items page
-  $ajaxUtils.sendGetRequest(
-    menuItemsTitleHtml,
-    function (menuItemsTitleHtml) {
-      // Retrieve single menu item snippet
-      $ajaxUtils.sendGetRequest(
-        menuItemHtml,
-        function (menuItemHtml) {
-          // Switch CSS class active to menu button
-          switchMenuToActive();
+		for (var i = 0; i < allCategories.length; i++) {
+			var html = singleCategoryHtml;
 
-          var menuItemsViewHtml =
-            buildMenuItemsViewHtml(categoryMenuItems,
-                                   menuItemsTitleHtml,
-                                   menuItemHtml);
-          insertHtml("#main-content", menuItemsViewHtml);
-        },
-        false);
-    },
-    false);
-}
+			var name = allCategories[i].name;
+			var short_name = allCategories[i].short_name;
 
+			html = insertProperty(html, "name", name);
+			html = insertProperty(html, "short_name", short_name);
 
-// Using category and menu items data and snippets html
-// build menu items view HTML to be inserted into page
-function buildMenuItemsViewHtml(categoryMenuItems,
-                                menuItemsTitleHtml,
-                                menuItemHtml) {
+			finalHtml += html;
+		}
 
-  menuItemsTitleHtml =
-    insertProperty(menuItemsTitleHtml,
-                   "name",
-                   categoryMenuItems.category.name);
-  menuItemsTitleHtml =
-    insertProperty(menuItemsTitleHtml,
-                   "special_instructions",
-                   categoryMenuItems.category.special_instructions);
+		finalHtml += "</section>";
+		return finalHtml;
+	}
 
-  var finalHtml = menuItemsTitleHtml;
-  finalHtml += "<section class='row'>";
+	var buildMenuItemsView = function(menuItems, menuItemsTitleHTML, singleMenuItemHtml) {
 
-  // Loop over menu items
-  var menuItems = categoryMenuItems.menu_items;
-  var catShortName = categoryMenuItems.category.short_name;
-  for (var i = 0; i < menuItems.length; i++) {
-    // Insert menu item values
-    var html = menuItemHtml;
-    html =
-      insertProperty(html, "short_name", menuItems[i].short_name);
-    html =
-      insertProperty(html,
-                     "catShortName",
-                     catShortName);
-    html =
-      insertItemPrice(html,
-                      "price_small",
-                      menuItems[i].price_small);
-    html =
-      insertItemPortionName(html,
-                            "small_portion_name",
-                            menuItems[i].small_portion_name);
-    html =
-      insertItemPrice(html,
-                      "price_large",
-                      menuItems[i].price_large);
-    html =
-      insertItemPortionName(html,
-                            "large_portion_name",
-                            menuItems[i].large_portion_name);
-    html =
-      insertProperty(html,
-                     "name",
-                     menuItems[i].name);
-    html =
-      insertProperty(html,
-                     "description",
-                     menuItems[i].description);
+		var title = menuItemsTitleHTML;
 
-    // Add clearfix after every second menu item
-    if (i % 2 != 0) {
-      html +=
-        "<div class='clearfix visible-lg-block visible-md-block'></div>";
-    }
+		title = insertProperty(title, "name", menuItems.category.name)
+		title = insertProperty(title, "special_instructions", menuItems.category.special_instructions)
 
-    finalHtml += html;
-  }
+		var finalHtml = title +
+		"<section class='row'>";
 
-  finalHtml += "</section>";
-  return finalHtml;
-}
+		var categoryShortName = menuItems.category.short_name;
+		for (var i = 0; i < menuItems.menu_items.length; i++) {
+			var html = singleMenuItemHtml;
+			var item = menuItems.menu_items[i];
 
+			html = insertProperty(html, "category_name", categoryShortName);
+			html = insertProperty(html, "short_name", item.short_name);
+			html = insertProperty(html, "name", item.name);
+			html = insertProperty(html, "description", item.description);
+			html = insertProperty(html, "price_small", item.price_small);
+			html = insertProperty(html, "price_large", item.price_large);
 
-// Appends price with '$' if price exists
-function insertItemPrice(html,
-                         pricePropName,
-                         priceValue) {
-  // If not specified, replace with empty string
-  if (!priceValue) {
-    return insertProperty(html, pricePropName, "");;
-  }
+			if (i % 2 != 0) {
+				html += "<div class='clearfix visible-lg-block visible-md-block'></div>";
+			}
 
-  priceValue = "$" + priceValue.toFixed(2);
-  html = insertProperty(html, pricePropName, priceValue);
-  return html;
-}
+			finalHtml += html;
+		}
 
+		finalHtml += "</section>";
+		return finalHtml;
+	}
 
-// Appends portion name in parens if it exists
-function insertItemPortionName(html,
-                               portionPropName,
-                               portionValue) {
-  // If not specified, return original string
-  if (!portionValue) {
-    return insertProperty(html, portionPropName, "");
-  }
-
-  portionValue = "(" + portionValue + ")";
-  html = insertProperty(html, portionPropName, portionValue);
-  return html;
-}
-
-
-global.$dc = dc;
-
+	global.$dc = dc;
 })(window);
