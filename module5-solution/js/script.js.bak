@@ -82,13 +82,10 @@ document.addEventListener("DOMContentLoaded", function (event) {
 // On first load, show home view
 showLoading("#main-content");
 $ajaxUtils.sendGetRequest(
-  homeHtml,
-  function (responseText) {
-    document.querySelector("#main-content")
-      .innerHTML = responseText;
-  },
-  false);
- });
+  allCategoriesUrl,
+  [...], // ***** <---- TODO: STEP 1: Substitute [...] ******
+  true); // Explicitly setting the flag to get JSON from server processed into an object literal
+});
 // *** finish **
 
 
@@ -298,7 +295,7 @@ function buildMenuItemsViewHtml(categoryMenuItems,
                      menuItems[i].description);
 
     // Add clearfix after every second menu item
-    if (i % 2 != 0) {
+    if (i % 2 !== 0) {
       html +=
         "<div class='clearfix visible-lg-block visible-md-block'></div>";
     }
@@ -317,7 +314,7 @@ function insertItemPrice(html,
                          priceValue) {
   // If not specified, replace with empty string
   if (!priceValue) {
-    return insertProperty(html, pricePropName, "");;
+    return insertProperty(html, pricePropName, "");
   }
 
   priceValue = "$" + priceValue.toFixed(2);
