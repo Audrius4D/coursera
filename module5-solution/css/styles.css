@@ -201,7 +201,7 @@ body {
 }
 .menu-item-photo {
   position: relative;
-  border: 2px solid #3F0C1F; 
+  border: 2px solid #3F0C1F;
   overflow: hidden;
   padding: 0;
   margin-right: -15px;
@@ -229,7 +229,6 @@ h3.menu-item-title {
 }
 /* END SINGLE CATEGORY PAGE */
 
-
 /********** Large devices only **********/
 @media (min-width: 1200px) {
   .container .jumbotron {
@@ -245,7 +244,7 @@ h3.menu-item-title {
     background: url('../images/restaurant-logo_medium.png') no-repeat;
     width: 100px;
     height: 100px;
-    margin: 5px 5px 5px 0;
+    margin: 5px 5px 5px 0; 
   }
   /* End Header */
 
@@ -286,10 +285,10 @@ h3.menu-item-title {
     height: 20px;
   }
 
-  #collapsable-nav a { /* Collapsed nav menu text */
+  #collapsable-nav a { /* Collapsed nav menu glyph */
     font-size: 1.2em;
-  }
-  #collapsable-nav a span { /* Collapsed nav menu glyph */
+}
+  #collapsable-nav a span {
     font-size: 1em;
     margin-right: 5px;
   }
@@ -301,7 +300,7 @@ h3.menu-item-title {
     padding: 10px;
     border: 2px solid #fff;
     background-color: #f6b319;
-    color: #951c49;
+    color: #951C49;
   }
   #xs-deliver {
     margin-top: 5px;
